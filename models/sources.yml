@@ -1,0 +1,196 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw data tables imported from operational systems."
+    schema: raw  # Replace with your actual schema name
+    tables:
+      - name: applicant_raw
+        description: "Basic applicant information."
+        columns:
+          - name: applicant_id
+            description: "Unique identifier for each applicant."
+          - name: first_name
+            description: "Applicant's first name."
+          - name: last_name
+            description: "Applicant's last name."
+          - name: date_of_birth
+            description: "Applicant's date of birth."
+          - name: gender
+            description: "Applicant's gender."
+          - name: marital_status
+            description: "Applicant's marital status."
+          - name: number_of_dependents
+            description: "Number of dependents."
+
+      - name: contact_information_raw
+        description: "Contact details and residence information."
+        columns:
+          - name: contact_id
+            description: "Unique identifier for each contact record."
+          - name: applicant_id
+            description: "Foreign key to applicant."
+          - name: home_address
+            description: "Home address."
+          - name: city
+            description: "City of residence."
+          - name: state_province
+            description: "State or province."
+          - name: postal_code
+            description: "Postal code."
+          - name: country
+            description: "Country of residence."
+          - name: primary_phone_number
+            description: "Primary phone number."
+          - name: email_address
+            description: "Email address."
+          - name: move_in_date
+            description: "Date moved into current residence."
+
+      - name: credit_information_raw
+        description: "Credit-related data including scores and history."
+        columns:
+          - name: credit_id
+            description: "Unique identifier for each credit record."
+          - name: applicant_id
+            description: "Foreign key to applicant."
+          - name: credit_score
+            description: "Credit score."
+          - name: credit_history_length
+            description: "Length of credit history."
+          - name: number_of_late_payments
+            description: "Number of late payments."
+          - name: bankruptcies_filed
+            description: "Indicates bankruptcy filings."
+          - name: foreclosures
+            description: "Indicates foreclosures."
+          - name: credit_card_debt
+            description: "Total credit card debt."
+          - name: total_credit_limit
+            description: "Total credit limit."
+          - name: number_of_hard_inquiries
+            description: "Number of hard inquiries."
+
+      - name: employment_information_raw
+        description: "Employment details like employer and job title."
+        columns:
+          - name: employment_id
+            description: "Unique identifier for each employment record."
+          - name: applicant_id
+            description: "Foreign key to applicant."
+          - name: employment_status
+            description: "Current employment status."
+          - name: employer_name
+            description: "Employer's name."
+          - name: job_title
+            description: "Job title."
+          - name: employment_start_date
+            description: "Employment start date."
+          - name: years_in_current_job
+            description: "Years in current job."
+
+      - name: financial_information_raw
+        description: "Financial metrics like income and debts."
+        columns:
+          - name: applicant_id
+            description: "Foreign key to applicant."
+          - name: post_tax_annual_income
+            description: "Post-tax annual income."
+          - name: total_monthly_expenses
+            description: "Total monthly expenses."
+          - name: monthly_emi_amount
+            description: "Monthly EMI amount."
+          - name: other_debts
+            description: "Other debts."
+
+      - name: loan_application_raw
+        description: "Details of loan applications submitted."
+        columns:
+          - name: loan_application_id
+            description: "Unique identifier for each loan application."
+          - name: applicant_id
+            description: "Foreign key to applicant."
+          - name: application_date
+            description: "Date of application."
+          - name: loan_amount_requested
+            description: "Amount requested."
+          - name: loan_purpose
+            description: "Purpose of the loan."
+          - name: loan_type
+            description: "Type of loan."
+          - name: loan_term
+            description: "Loan term."
+          - name: interest_rate_type
+            description: "Interest rate type."
+
+  - name: transformed
+    description: "Transformed views aggregating and analyzing raw data."
+    schema: transformed  # Use the transformed schema for the views
+    tables:
+      - name: trs_risk_assessment
+        description: "Risk assessment data for each applicant."
+        columns:
+          - name: applicant_id
+            description: "Unique identifier for each applicant."
+          - name: loan_amount_requested
+            description: "Amount requested."
+          - name: credit_score
+            description: "Credit score."
+          - name: dti_ratio
+            description: "Debt-to-income ratio."
+          - name: lti_ratio
+            description: "Loan-to-income ratio."
+          - name: number_of_late_payments
+            description: "Number of late payments."
+          - name: bankruptcies_filed
+            description: "Bankruptcy filings."
+          - name: foreclosures
+            description: "Foreclosures."
+          - name: risk_tier
+            description: "Risk tier classification."
+
+      - name: trs_employment_analysis
+        description: "Employment status and stability analysis."
+        columns:
+          - name: applicant_id
+            description: "Unique identifier for each applicant."
+          - name: employment_status
+            description: "Current employment status."
+          - name: employment_stability
+            description: "Employment stability indicator."
+
+      - name: trs_residence_stability
+        description: "Residence stability analysis."
+        columns:
+          - name: applicant_id
+            description: "Unique identifier for each applicant."
+          - name: residence_stability
+            description: "Residence stability indicator."
+
+      - name: trs_financial_metrics
+        description: "Calculated financial metrics."
+        columns:
+          - name: applicant_id
+            description: "Unique identifier for each applicant."
+          - name: post_tax_annual_income
+            description: "Post-tax annual income."
+          - name: dti_ratio
+            description: "Debt-to-income ratio."
+          - name: lti_ratio
+            description: "Loan-to-income ratio."
+
+      - name: trs_credit_analysis
+        description: "Credit analysis data."
+        columns:
+          - name: applicant_id
+            description: "Unique identifier for each applicant."
+          - name: credit_score
+            description: "Credit score."
+          - name: number_of_late_payments
+            description: "Number of late payments."
+          - name: bankruptcies_filed
+            description: "Bankruptcy filings."
+          - name: foreclosures
+            description: "Foreclosures."
+          - name: credit_utilization_ratio
+            description: "Credit utilization ratio."

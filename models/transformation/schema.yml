@@ -1,0 +1,562 @@
+# version: 2
+
+# models:
+#   - name: trs_applicant_details
+#     description: "Dimension table consolidating applicant information with calculated age."
+#     tests:
+#       - age_consistency
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#       - name: first_name
+#         description: "Applicant's first name."
+#         tests:
+#           - not_null
+#       - name: last_name
+#         description: "Applicant's last name."
+#         tests:
+#           - not_null
+#       - name: date_of_birth
+#         description: "Applicant's date of birth."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: '1980-01-01'
+#               max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+#               data_type: date
+#       - name: age
+#         description: "Calculated age of the applicant based on date_of_birth."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 18
+#               max_value: 100
+#       - name: gender
+#         description: "Applicant's gender."
+#         tests:
+#           - accepted_values:
+#               values: ['Male', 'Female', 'Other']
+#       - name: marital_status
+#         description: "Applicant's marital status."
+#         tests:
+#           - accepted_values:
+#               values: ['Single', 'Married', 'Divorced', 'Widowed']
+#       - name: number_of_dependents
+#         description: "Number of dependents the applicant has."
+#         tests:
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 20
+
+#   - name: trs_credit_analysis
+#     description: "Dimension table consolidating credit information with calculated credit utilization ratio."
+#     tests:
+#       - credit_utilization_accuracy
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#           - relationships:
+#               to: ref('trs_applicant_details')
+#               field: applicant_id
+
+#       - name: credit_score
+#         description: "Applicant's credit score."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 300
+#               max_value: 850
+#           - no_negative_values
+
+#       - name: credit_history_length
+#         description: "Length of applicant's credit history in years."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 100
+#           - no_negative_values
+
+#       - name: number_of_late_payments
+#         description: "Total number of late payments."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 1000
+#           - no_negative_values
+
+#       - name: bankruptcies_filed
+#         description: "Number of bankruptcies filed."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: [true, false]
+
+#       - name: foreclosures
+#         description: "Number of foreclosures."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: [true, false]
+
+#       - name: credit_card_debt
+#         description: "Total credit card debt."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 1000000
+#           - no_negative_values
+
+#       - name: total_credit_limit
+#         description: "Total credit limit."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 1000000
+#           - no_negative_values
+
+#       - name: number_of_hard_inquiries
+#         description: "Number of hard inquiries."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 100
+#           - no_negative_values
+
+#       - name: credit_utilization_ratio
+#         description: "Ratio of credit card debt to total credit limit."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 1
+
+
+#   - name: trs_employment_analysis
+#     description: "Transformed model analyzing employment information with calculated employment stability."
+#     tests:
+#       - employment_stability_accuracy
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#           - relationships:
+#               to: ref('trs_applicant_details')
+#               field: applicant_id
+
+#       - name: employment_status
+#         description: "Applicant's current employment status."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student']
+
+#       - name: employer_name
+#         description: "Name of the applicant's employer."
+#         tests:
+#           - not_null
+
+#       - name: job_title
+#         description: "Applicant's job title."
+#         tests:
+#           - not_null
+
+#       - name: employment_start_date
+#         description: "Date when the applicant started their current job."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: '1980-01-01'
+#               max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+#               data_type: date
+#           - date_not_in_future
+
+#       - name: years_in_current_job
+#         description: "Number of years the applicant has been in their current job."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 60
+#           - no_negative_values
+
+#       - name: employment_stability
+#         description: "Indicates if the applicant has at least one year in their current job."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: [true, false]
+
+#   - name: trs_financial_metrics
+#     description: "Transformed model analyzing financial information with calculated DTI and LTI ratios."
+#     tests:
+#       - dti_ratio_accuracy
+#       - lti_ratio_accuracy
+#       - no_zero_income
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#           - relationships:
+#               to: ref('trs_applicant_details')
+#               field: applicant_id
+
+#       - name: post_tax_annual_income
+#         description: "Applicant's annual income after taxes."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 1
+#               max_value: 10000000
+#           - no_negative_values
+
+#       - name: monthly_emi_amount
+#         description: "Applicant's monthly EMI amount."
+#         tests:
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 50000
+#           - no_negative_values
+
+#       - name: credit_card_debt
+#         description: "Applicant's credit card debt."
+#         tests:
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 10000000
+#           - no_negative_values
+
+#       - name: other_debts
+#         description: "Other debts the applicant has."
+#         tests:
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 1000000
+#           - no_negative_values
+
+#       - name: loan_amount_requested
+#         description: "Loan amount requested by the applicant."
+#         tests:
+#           - accepted_range:
+#               min_value: 1
+#               max_value: 10000000
+#           - no_negative_values
+
+#       - name: dti_ratio
+#         description: "Debt-to-Income ratio of the applicant."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 5
+
+#       - name: lti_ratio
+#         description: "Loan-to-Income ratio of the applicant."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 10
+
+
+#   - name: trs_residence_stability
+#     description: "Transformed model analyzing contact information with calculated residence stability."
+#     tests:
+#       - years_at_current_residence_accuracy
+#       - residence_stability_accuracy
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#           - relationships:
+#               to: ref('trs_applicant_details')
+#               field: applicant_id
+
+#       - name: home_address
+#         description: "Applicant's home address."
+#         tests:
+#           - not_null
+
+#       - name: city
+#         description: "City where the applicant resides."
+#         tests:
+#           - not_null
+
+#       - name: state_province
+#         description: "State or province where the applicant resides."
+#         tests:
+#           - not_null
+
+#       - name: postal_code
+#         description: "Postal code of the applicant's residence."
+#         tests:
+#           - not_null
+
+#       - name: country
+#         description: "Country where the applicant resides."
+#         tests:
+#           - not_null
+
+#       - name: primary_phone_number
+#         description: "Applicant's primary phone number."
+#         tests:
+#           - not_null
+
+#       - name: email_address
+#         description: "Applicant's email address."
+#         tests:
+#           - not_null
+
+#       - name: move_in_date
+#         description: "Date when the applicant moved into their current residence."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: '1980-01-01'
+#               max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+#               data_type: date
+#           - date_not_in_future
+
+#       - name: years_at_current_residence
+#         description: "Number of years the applicant has lived at their current residence."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 100
+
+#       - name: residence_stability
+#         description: "Indicates if the applicant has lived at their current residence for at least one year."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: [true, false]
+
+#   - name: trs_risk_assessment
+#     description: "Transformed model assessing risk tiers for applicants."
+#     tests:
+#       - risk_tier_accuracy
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#           - relationships:
+#               to: ref('trs_applicant_details')
+#               field: applicant_id
+
+#       - name: first_name
+#         description: "Applicant's first name."
+#         tests:
+#           - not_null
+
+#       - name: last_name
+#         description: "Applicant's last name."
+#         tests:
+#           - not_null
+
+#       - name: loan_amount_requested
+#         description: "Loan amount requested by the applicant."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 1
+#               max_value: 1000000
+
+#       - name: credit_score
+#         description: "Applicant's credit score."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 300
+#               max_value: 850
+#           - no_negative_values
+
+#       - name: dti_ratio
+#         description: "Applicant's Debt-to-Income ratio."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 5
+#           - no_negative_values
+
+#       - name: lti_ratio
+#         description: "Applicant's Loan-to-Income ratio."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 10
+#           - no_negative_values
+
+#       - name: risk_tier
+#         description: "Assigned risk tier for the applicant."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor']
+
+
+
+
+version: 2
+
+models:
+  - name: trs_applicant_details
+    description: "Dimension table consolidating applicant information with calculated age."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+      - name: first_name
+        description: "Applicant's first name."
+        tests:
+          - not_null
+      - name: last_name
+        description: "Applicant's last name."
+        tests:
+          - not_null
+      - name: date_of_birth
+        description: "Applicant's date of birth."
+        tests:
+          - not_null
+      - name: age
+        description: "Calculated age of the applicant based on date_of_birth."
+        tests:
+          - accepted_range:
+              min_value: 18
+              max_value: 100
+
+  - name: trs_credit_analysis
+    description: "Dimension table consolidating credit information with calculated credit utilization ratio."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('trs_applicant_details')
+              field: applicant_id
+      - name: credit_score
+        description: "Applicant's credit score."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 300
+              max_value: 850
+      - name: credit_utilization_ratio
+        description: "Ratio of credit card debt to total credit limit."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+
+  - name: trs_employment_analysis
+    description: "Transformed model analyzing employment information with calculated employment stability."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('trs_applicant_details')
+              field: applicant_id
+      - name: employment_status
+        description: "Applicant's current employment status."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student']
+      - name: employment_stability
+        description: "Indicates if the applicant has at least one year in their current job."
+        tests:
+          - accepted_values:
+              values: [true, false]
+
+  - name: trs_financial_metrics
+    description: "Transformed model analyzing financial information with calculated DTI and LTI ratios."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('trs_applicant_details')
+              field: applicant_id
+      - name: post_tax_annual_income
+        description: "Applicant's annual income after taxes."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 1
+              max_value: 10000000
+      - name: dti_ratio
+        description: "Debt-to-Income ratio of the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 5
+      - name: lti_ratio
+        description: "Loan-to-Income ratio of the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 10
+
+  - name: trs_residence_stability
+    description: "Transformed model analyzing contact information with calculated residence stability."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('trs_applicant_details')
+              field: applicant_id
+      - name: residence_stability
+        description: "Indicates if the applicant has lived at their current residence for at least one year."
+        tests:
+          - accepted_values:
+              values: [true, false]
+
+  - name: trs_risk_assessment
+    description: "Transformed model assessing risk tiers for applicants."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('trs_applicant_details')
+              field: applicant_id
+      - name: risk_tier
+        description: "Assigned risk tier for the applicant."
+        tests:
+          - accepted_values:
+              values: ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor']
+

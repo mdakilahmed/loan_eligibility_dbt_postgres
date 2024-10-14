@@ -1,0 +1,118 @@
+# version: 2
+
+# models:
+#   - name: loan_eligibility
+#     description: "Model determining loan decisions based on risk assessments."
+#     tests:
+#       - loan_decision_accuracy
+#       - approved_loan_amount_accuracy
+#       - decline_reason_accuracy
+#     columns:
+#       - name: applicant_id
+#         description: "Unique identifier for the applicant."
+#         tests:
+#           - not_null
+#           - unique
+#           - relationships:
+#               to: ref('trs_risk_assessment')
+#               field: applicant_id
+
+#       - name: first_name
+#         description: "Applicant's first name."
+#         tests:
+#           - not_null
+
+#       - name: last_name
+#         description: "Applicant's last name."
+#         tests:
+#           - not_null
+
+#       - name: loan_amount_requested
+#         description: "Loan amount requested by the applicant."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 1
+#               max_value: 1000000
+
+#       - name: credit_score
+#         description: "Applicant's credit score."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 300
+#               max_value: 850
+
+#       - name: dti_ratio
+#         description: "Applicant's Debt-to-Income ratio."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 5
+
+#       - name: lti_ratio
+#         description: "Applicant's Loan-to-Income ratio."
+#         tests:
+#           - not_null
+#           - accepted_range:
+#               min_value: 0
+#               max_value: 10
+
+#       - name: risk_tier
+#         description: "Assigned risk tier for the applicant."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor']
+
+#       - name: loan_decision
+#         description: "Decision on the loan application."
+#         tests:
+#           - not_null
+#           - accepted_values:
+#               values: ['Approved', 'Review: Manual Approval Required', 'Declined']
+
+#       - name: offered_interest_rate
+#         description: "Interest rate offered to the applicant."
+#         tests:
+#           - accepted_range:
+#               min_value: 0.10
+#               max_value: 0.119
+
+#       - name: approved_loan_amount
+#         description: "Approved loan amount after adjustments."
+#         tests:
+#           - not_null
+
+
+
+version: 2
+
+models:
+  - name: loan_eligibility
+    description: "Model determining loan decisions based on risk assessments."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+      - name: loan_decision
+        description: "Decision on the loan application."
+        tests:
+          - accepted_values:
+              values: ['Approved', 'Review: Manual Approval Required', 'Declined']
+      - name: offered_interest_rate
+        description: "Interest rate offered to the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0.09
+              max_value: 0.12
+      - name: approved_loan_amount
+        description: "Approved loan amount after adjustments."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1000000
+
