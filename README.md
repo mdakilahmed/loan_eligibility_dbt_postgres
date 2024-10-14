@@ -3,7 +3,7 @@
 Welcome to the **Loan Eligibility Data Pipeline** project! This project aims to build a data pipeline that processes loan application data to determine loan eligibility based on various financial and credit metrics. This guide provides comprehensive instructions to set up and run the project, including data generation, transformation, testing, and analysis using **dbt (Data Build Tool)** with **PostgreSQL**.
 
 **Data Flow**:
-    ![Data Flow](./dbt_loan_project/images/Data%20Flow.jpg)
+    ![Data Flow](images/Data Flow.jpg)
 
 ---
 
