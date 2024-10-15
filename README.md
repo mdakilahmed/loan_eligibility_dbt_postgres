@@ -3,7 +3,8 @@
 Welcome to the **Loan Eligibility Data Pipeline** project! This project aims to build a data pipeline that processes loan application data to determine loan eligibility based on various financial and credit metrics. This guide provides comprehensive instructions to set up and run the project, including data generation, transformation, testing, and analysis using **dbt (Data Build Tool)** with **PostgreSQL**.
 
 **Data Flow**:
-    ![Data Flow](images/Data%20Flow.jpg)
+
+![Data Flow](images/Data%20Flow.jpg)
 
 ---
 
@@ -40,8 +41,13 @@ Welcome to the **Loan Eligibility Data Pipeline** project! This project aims to 
     - [Data Flow](#data-flow)
     - [Model Details](#model-details)
 11. [Setting Up Elementary for Data Quality Checks](#setting-up-elementary-for-data-quality-checks)
-12. [Conclusion](#conclusion)
-13. [Appendix](#appendix)
+12. [Configuring Multiple Environments (dev, qat, prod)](#configuring-multiple-environments-dev-qat-prod)
+    - [Updating `dbt_project.yml`](#updating-dbt_projectyml)
+    - [Setting Up `profiles.yml`](#setting-up-profilesyml)
+    - [Overriding Variables per Environment](#overriding-variables-per-environment)
+    - [Switching Between Environments](#switching-between-environments)
+13. [Conclusion](#conclusion)
+14. [Appendix](#appendix)
     - [Common Issues and Solutions](#common-issues-and-solutions)
     - [References](#references)
 
@@ -608,6 +614,174 @@ edr report
 ```
 
 *This report provides insights into data quality, including anomalies, freshness, and test results.*
+
+---
+
+## **Configuring Multiple Environments (dev, qat, prod)**
+
+To manage different environments—**development (dev)**, **quality assurance/testing (qat)**, and **production (prod)**—you need to configure your project to accommodate these environments. This involves setting up your `profiles.yml` file with multiple targets, adjusting your `dbt_project.yml`, and making any necessary changes in your models to handle environment-specific settings.
+
+### **Updating `dbt_project.yml`**
+
+Edit your `dbt_project.yml` file to configure model materializations and schemas per environment.
+
+**Example `dbt_project.yml`:**
+
+```yaml
+# dbt_project.yml
+
+name: 'loan_eligibility_project'
+version: '1.0.0'
+
+profile: 'loan_eligibility_project'
+
+# Configuring file paths
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Directories to be removed by `dbt clean`
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Defining variables
+vars:
+  raw_schema: raw
+  transformed_schema: transformed
+
+# Configuring models
+models:
+  loan_eligibility_project:
+    # Configure model materializations per environment
+    +materialized: "{{ 'table' if target.name == 'prod' else 'view' }}"
+    # Configure schemas per environment
+    +schema: "{{ target.schema }}"
+  elementary:
+    +schema: "elementary"
+```
+
+**Explanation:**
+
+- **`+materialized`**: Uses a Jinja expression to set the materialization based on the environment. Models will be materialized as **tables** in `prod` and **views** in other environments.
+- **`+schema`**: Sets the schema based on the target environment defined in `profiles.yml`.
+
+### **Setting Up `profiles.yml`**
+
+Update your `profiles.yml` file to define multiple targets for each environment.
+
+**Example `profiles.yml`:**
+
+```yaml
+loan_eligibility_project:
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: "{{ env_var('DBT_DEV_USER') }}"
+      password: "{{ env_var('DBT_DEV_PASSWORD') }}"
+      port: 5432
+      dbname: loan_database_dev
+      schema: dev_schema
+      threads: 4
+      vars:
+        default_materialization: 'view'
+
+    qat:
+      type: postgres
+      host: qat-db-host
+      user: "{{ env_var('DBT_QAT_USER') }}"
+      password: "{{ env_var('DBT_QAT_PASSWORD') }}"
+      port: 5432
+      dbname: loan_database_qat
+      schema: qat_schema
+      threads: 4
+      vars:
+        default_materialization: 'view'
+
+    prod:
+      type: postgres
+      host: prod-db-host
+      user: "{{ env_var('DBT_PROD_USER') }}"
+      password: "{{ env_var('DBT_PROD_PASSWORD') }}"
+      port: 5432
+      dbname: loan_database_prod
+      schema: prod_schema
+      threads: 8
+      vars:
+        default_materialization: 'table'
+
+  target: dev  # Set default target environment
+```
+
+**Explanation:**
+
+- **`outputs`**: Contains configurations for each environment (`dev`, `qat`, `prod`).
+- **`user` and `password`**: Use environment variables to secure sensitive information.
+- **`schema`**: Specifies the schema for each environment.
+- **`vars`**: Overrides variables per environment.
+- **`target`**: Specifies the default environment.
+
+**Setting Environment Variables:**
+
+Set the environment variables for database credentials.
+
+```bash
+# Development environment
+export DBT_DEV_USER='dev_user'
+export DBT_DEV_PASSWORD='dev_password'
+
+# QAT environment
+export DBT_QAT_USER='qat_user'
+export DBT_QAT_PASSWORD='qat_password'
+
+# Production environment
+export DBT_PROD_USER='prod_user'
+export DBT_PROD_PASSWORD='prod_password'
+```
+
+### **Overriding Variables per Environment**
+
+You can override variables per environment using the `vars` section in `profiles.yml` or by passing them at runtime.
+
+**Using `profiles.yml`:**
+
+Variables defined under each target in `profiles.yml` can be accessed in your models and `dbt_project.yml` using `var('variable_name')`.
+
+**Using Runtime Arguments:**
+
+You can override variables when running dbt commands.
+
+```bash
+dbt run --target prod --vars 'default_materialization: table'
+```
+
+### **Switching Between Environments**
+
+Use the `--target` flag to specify the environment when running dbt commands.
+
+**Examples:**
+
+- **Development Environment:**
+
+  ```bash
+  dbt run  # Uses the default target (dev)
+  ```
+
+- **QAT Environment:**
+
+  ```bash
+  dbt run --target qat
+  ```
+
+- **Production Environment:**
+
+  ```bash
+  dbt run --target prod
+  ```
 
 ---
 
