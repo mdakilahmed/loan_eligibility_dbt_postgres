@@ -1,6 +1,261 @@
-# version: 2
+version: 2
 
-# models:
+models:
+  - name: stg_applicants
+    description: "Staging table for applicant information, including personal details such as name, date of birth, and gender. This table serves as a base for linking applicant-related information across the loan eligibility pipeline."
+    columns:
+      - name: first_name
+        description: "The applicant's first name."
+        tests:
+          - not_null
+      - name: last_name
+        description: "The applicant's last name."
+        tests:
+          - not_null
+      - name: date_of_birth
+        description: "The applicant's date of birth, used to calculate age and assess loan eligibility criteria."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: '1900-01-01'
+              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+              data_type: date
+      - name: gender
+        description: "The applicant's gender."
+        tests:
+          - accepted_values:
+              values: ['Male', 'Female', 'Other']
+      - name: marital_status
+        description: "The marital status of the applicant."
+        tests:
+          - accepted_values:
+              values: ['Single', 'Married', 'Divorced', 'Widowed']
+      - name: number_of_dependents
+        description: "The number of dependents financially supported by the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 10
+
+  - name: stg_contact_information
+    description: "Staging table for storing applicant contact details, including address, phone number, and email."
+    columns:
+      - name: contact_id
+        description: "Unique identifier for the contact record."
+        tests:
+          - not_null
+          - unique
+      - name: applicant_id
+        description: "Foreign key linking to the applicant in the `stg_applicants` table."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_applicants')
+              field: applicant_id
+      - name: home_address
+        description: "The home address of the applicant."
+        tests:
+          - not_null
+      - name: postal_code
+        description: "Postal code of the applicant's home address."
+        tests:
+          - not_null
+      - name: primary_phone_number
+        description: "The primary phone number for contacting the applicant."
+        tests:
+          - not_null
+      - name: email_address
+        description: "The applicant's primary email address for correspondence."
+        tests:
+          - not_null
+      - name: move_in_date
+        description: "Date when the applicant moved into their current home address."
+        tests:
+          - accepted_range:
+              min_value: '1900-01-01'
+              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+              data_type: date
+
+  - name: stg_credit_information
+    description: "Staging table for storing applicant credit information, including credit score, credit card debt, and credit limits."
+    columns:
+      - name: credit_id
+        description: "Unique identifier for the credit record."
+        tests:
+          - not_null
+          - unique
+      - name: applicant_id
+        description: "Foreign key linking to the applicant in the `stg_applicants` table."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_applicants')
+              field: applicant_id
+      - name: credit_score
+        description: "The credit score of the applicant."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 300
+              max_value: 850
+      - name: credit_card_debt
+        description: "The total amount of credit card debt held by the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1000000
+      - name: total_credit_limit
+        description: "The total credit limit available to the applicant across all accounts."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1000000
+      - name: number_of_hard_inquiries
+        description: "The number of hard inquiries made on the applicant's credit report."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 50
+
+  - name: stg_employment_information
+    description: "Staging table for storing applicant employment details, including job title, employer, and employment status."
+    columns:
+      - name: employment_id
+        description: "Unique identifier for the employment record."
+        tests:
+          - not_null
+          - unique
+      - name: applicant_id
+        description: "Foreign key linking to the applicant in the `stg_applicants` table."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_applicants')
+              field: applicant_id
+      - name: employment_status
+        description: "Current employment status of the applicant."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student']
+      - name: employer_name
+        description: "The name of the applicant's current employer."
+        tests:
+          - not_null
+      - name: job_title
+        description: "The job title of the applicant at their current employer."
+        tests:
+          - not_null
+      - name: employment_start_date
+        description: "The date when the applicant started their current job."
+        tests:
+          - accepted_range:
+              min_value: '1900-01-01'
+              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+              data_type: date
+      - name: years_in_current_job
+        description: "The number of years the applicant has been in their current job."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 60
+
+  - name: stg_financial_information
+    description: "Staging table for storing financial information of the applicant, including income, expenses, and debts."
+    columns:
+      - name: applicant_id
+        description: "Unique identifier for the applicant."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_applicants')
+              field: applicant_id
+      - name: post_tax_annual_income
+        description: "The applicant's annual income after taxes."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1000000
+      - name: total_monthly_expenses
+        description: "Total monthly expenses incurred by the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 100000
+      - name: monthly_emi_amount
+        description: "The monthly amount the applicant pays towards existing loans."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 50000
+      - name: other_debts
+        description: "The total value of other debts held by the applicant."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 100000
+
+  - name: stg_loan_application
+    description: "Staging table for loan applications with deduplicated records. It contains information about loan application submissions and requested amounts."
+    columns:
+      - name: loan_application_id
+        description: "Unique identifier for the loan application."
+        tests:
+          - not_null
+          - unique
+      - name: applicant_id
+        description: "Foreign key linking to the applicant in the `stg_applicants` table."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_applicants')
+              field: applicant_id
+      - name: application_date
+        description: "The date when the loan application was submitted."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: '1900-01-01'
+              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
+              data_type: date
+      - name: loan_amount_requested
+        description: "The amount of loan requested by the applicant."
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 1
+              max_value: 1000000
+      - name: loan_purpose
+        description: "The stated purpose for which the loan is being requested."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Home Purchase', 'Debt Consolidation', 'Business', 'Education', 'Other']
+      - name: loan_type
+        description: "The type of loan being applied for."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Personal Loan', 'Auto Loan', 'Mortgage', 'Student Loan', 'Business Loan']
+      - name: loan_term
+        description: "The term of the loan in months."
+        tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 360
+      - name: interest_rate_type
+        description: "The type of interest rate applicable to the loan (fixed or variable)."
+        tests:
+          - accepted_values:
+              values: ['Fixed', 'Variable']
+
+
+
+
+# Other test cases you can look into
+
 #   - name: stg_applicants
 #     columns:
 #       - name: first_name
@@ -244,223 +499,3 @@
 #           - not_null
 #           - accepted_values:
 #               values: ['Fixed', 'Variable']
-
-
-
-
-version: 2
-
-models:
-  - name: stg_applicants
-    columns:
-      - name: first_name
-        tests:
-          - not_null
-      - name: last_name
-        tests:
-          - not_null
-      - name: date_of_birth
-        tests:
-          - not_null
-          - accepted_range:
-              min_value: '1900-01-01'
-              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
-              data_type: date
-      - name: gender
-        tests:
-          - accepted_values:
-              values: ['Male', 'Female', 'Other']
-      - name: marital_status
-        tests:
-          - accepted_values:
-              values: ['Single', 'Married', 'Divorced', 'Widowed']
-      - name: number_of_dependents
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 10
-
-  - name: stg_contact_information
-    columns:
-      - name: contact_id
-        tests:
-          - not_null
-          - unique
-      - name: applicant_id
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_applicants')
-              field: applicant_id
-      - name: home_address
-        tests:
-          - not_null
-      - name: postal_code
-        tests:
-          - not_null
-      - name: primary_phone_number
-        tests:
-          - not_null
-      - name: email_address
-        tests:
-          - not_null
-      - name: move_in_date
-        tests:
-          - accepted_range:
-              min_value: '1900-01-01'
-              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
-              data_type: date
-
-  - name: stg_credit_information
-    columns:
-      - name: credit_id
-        tests:
-          - not_null
-          - unique
-      - name: applicant_id
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_applicants')
-              field: applicant_id
-      - name: credit_score
-        tests:
-          - not_null
-          - accepted_range:
-              min_value: 300
-              max_value: 850
-      - name: credit_card_debt
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 1000000
-      - name: total_credit_limit
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 1000000
-      - name: number_of_hard_inquiries
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 50
-
-  - name: stg_employment_information
-    columns:
-      - name: employment_id
-        tests:
-          - not_null
-          - unique
-      - name: applicant_id
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_applicants')
-              field: applicant_id
-      - name: employment_status
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['Employed', 'Unemployed', 'Self-Employed', 'Retired', 'Student']
-      - name: employer_name
-        tests:
-          - not_null
-      - name: job_title
-        tests:
-          - not_null
-      - name: employment_start_date
-        tests:
-          - accepted_range:
-              min_value: '1900-01-01'
-              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
-              data_type: date
-      - name: years_in_current_job
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 60
-
-  - name: stg_financial_information
-    columns:
-      - name: applicant_id
-        tests:
-          - not_null
-          - unique
-          - relationships:
-              to: ref('stg_applicants')
-              field: applicant_id
-      - name: post_tax_annual_income
-        tests:
-          - not_null
-          - accepted_range:
-              min_value: 0
-              max_value: 1000000
-      - name: total_monthly_expenses
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 100000
-      - name: monthly_emi_amount
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 50000
-      - name: other_debts
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 100000
-
-  - name: stg_loan_application
-    description: "Staging table for loan applications with deduplicated records."
-    columns:
-      - name: loan_application_id
-        description: "Unique identifier for the loan application."
-        tests:
-          - not_null
-          - unique
-      - name: applicant_id
-        description: "Unique identifier for the applicant."
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_applicants')
-              field: applicant_id
-      - name: application_date
-        description: "Date when the loan application was submitted."
-        tests:
-          - not_null
-          - accepted_range:
-              min_value: '1900-01-01'
-              max_value: '{{ run_started_at.strftime("%Y-%m-%d") }}'
-              data_type: date
-      - name: loan_amount_requested
-        description: "The amount of loan requested by the applicant."
-        tests:
-          - not_null
-          - accepted_range:
-              min_value: 1
-              max_value: 1000000
-      - name: loan_purpose
-        description: "Purpose of the loan."
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['Home Purchase', 'Debt Consolidation', 'Business', 'Education', 'Other']
-      - name: loan_type
-        description: "Type of the loan."
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['Personal Loan', 'Auto Loan', 'Mortgage', 'Student Loan', 'Business Loan']
-      - name: loan_term
-        description: "Term of the loan in months."
-        tests:
-          - accepted_range:
-              min_value: 1
-              max_value: 360
-      - name: interest_rate_type
-        description: "Type of interest rate."
-        tests:
-          - accepted_values:
-              values: ['Fixed', 'Variable']

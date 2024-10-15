@@ -1,3 +1,32 @@
+# # dbt_project.yml
+
+# name: 'dbt_loan_project'
+# version: '1.0.0'
+
+# profile: 'dbt_loan_project'
+
+# # Configuring file paths
+# model-paths: ["models"]
+# analysis-paths: ["analyses"]
+# test-paths: ["tests"]
+# seed-paths: ["seeds"]
+# macro-paths: ["macros"]
+# snapshot-paths: ["snapshots"]
+
+# # Directories to be removed by `dbt clean`
+# clean-targets:
+#   - "target"
+#   - "dbt_packages"
+
+# # Configuring models
+# models:
+#   # Use the project name here for consistency
+#   dbt_loan_project:
+#     materialized: table
+#   elementary:
+#     +schema: "elementary"
+
+
 # dbt_project.yml
 
 name: 'dbt_loan_project'
@@ -18,15 +47,11 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
-# Defining variables
-vars:
-  raw_schema: raw
-  transformed_schema: transformed
-
 # Configuring models
 models:
-  # Use the project name here for consistency
   dbt_loan_project:
-    materialized: table
+    # Configure model materializations per environment
+    materialized: "{{ 'table' if target.name == 'prod' else 'view' }}"
   elementary:
     +schema: "elementary"
+

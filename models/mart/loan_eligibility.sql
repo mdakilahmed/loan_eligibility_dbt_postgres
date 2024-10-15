@@ -22,7 +22,7 @@
 --   recent bankruptcies, and recent foreclosures) to provide a detailed decline reason.
 -- If the loan is not declined, the decline reason is NULL.
 
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- Determines loan decisions and interest rates based on 'risk_tier'.
 WITH decisions AS (
