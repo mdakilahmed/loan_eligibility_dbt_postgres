@@ -1,6 +1,36 @@
-# version: 2
+version: 2
 
-# models:
+models:
+  - name: loan_eligibility
+    description: "This model is used to assess and determine the loan eligibility of applicants based on various financial and credit risk factors. The model outputs a decision regarding the loan application, including whether it's approved, requires manual review, or is declined."
+    columns:
+      - name: applicant_id
+        description: "A unique identifier assigned to each applicant, used to link applicant data across different models."
+        tests:
+          - not_null
+          - unique
+      - name: loan_decision
+        description: "The final decision regarding the applicant's loan application. It indicates whether the loan has been approved, declined, or requires further manual review."
+        tests:
+          - accepted_values:
+              values: ['Approved', 'Review: Manual Approval Required', 'Declined']
+      - name: offered_interest_rate
+        description: "The interest rate offered to the applicant upon loan approval, calculated based on their creditworthiness and risk profile."
+        tests:
+          - accepted_range:
+              min_value: 0.09
+              max_value: 0.12
+      - name: approved_loan_amount
+        description: "The total loan amount approved for the applicant after all eligibility checks and adjustments are made."
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1000000
+
+
+
+
+# Other more test cases:
 #   - name: loan_eligibility
 #     description: "Model determining loan decisions based on risk assessments."
 #     tests:
@@ -85,34 +115,4 @@
 #         tests:
 #           - not_null
 
-
-
-version: 2
-
-models:
-  - name: loan_eligibility
-    description: "Model determining loan decisions based on risk assessments."
-    columns:
-      - name: applicant_id
-        description: "Unique identifier for the applicant."
-        tests:
-          - not_null
-          - unique
-      - name: loan_decision
-        description: "Decision on the loan application."
-        tests:
-          - accepted_values:
-              values: ['Approved', 'Review: Manual Approval Required', 'Declined']
-      - name: offered_interest_rate
-        description: "Interest rate offered to the applicant."
-        tests:
-          - accepted_range:
-              min_value: 0.09
-              max_value: 0.12
-      - name: approved_loan_amount
-        description: "Approved loan amount after adjustments."
-        tests:
-          - accepted_range:
-              min_value: 0
-              max_value: 1000000
 
