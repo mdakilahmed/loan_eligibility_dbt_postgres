@@ -1,6 +1,6 @@
 # **Loan Eligibility Data Pipeline Project**
 
-Welcome to the **Loan Eligibility Data Pipeline** project! This project aims to build a data pipeline that processes loan application data to determine loan eligibility based on various financial and credit metrics. This guide provides comprehensive instructions to set up and run the project, including data generation, transformation, testing, and analysis using **dbt (Data Build Tool)** with **PostgreSQL**.
+Welcome to the **Loan Eligibility Data Pipeline** project! This project aims to build a data pipeline that processes loan application data to determine loan eligibility based on various financial and credit metrics. This guide provides comprehensive instructions to set up and run the project, including data generation, transformation, testing, analysis using **dbt (Data Build Tool)** with **PostgreSQL**, and advanced topics like model versioning and rollback functionality.
 
 **Data Flow**:
 
@@ -46,8 +46,15 @@ Welcome to the **Loan Eligibility Data Pipeline** project! This project aims to 
     - [Setting Up `profiles.yml`](#setting-up-profilesyml)
     - [Overriding Variables per Environment](#overriding-variables-per-environment)
     - [Switching Between Environments](#switching-between-environments)
-13. [Conclusion](#conclusion)
-14. [Appendix](#appendix)
+13. [Integrating Machine Learning into the Pipeline](#integrating-machine-learning-into-the-pipeline)
+14. [Model Versioning and Rollback Functionality in dbt](#model-versioning-and-rollback-functionality-in-dbt)
+    - [Understanding Model Versioning](#understanding-model-versioning)
+    - [When to Use Model Versioning](#when-to-use-model-versioning)
+    - [Implementing Model Versioning](#implementing-model-versioning)
+    - [Configuring Versioned Models](#configuring-versioned-models)
+    - [Rollback Functionality](#rollback-functionality)
+15. [Conclusion](#conclusion)
+16. [Appendix](#appendix)
     - [Common Issues and Solutions](#common-issues-and-solutions)
     - [References](#references)
 
@@ -62,6 +69,7 @@ This project builds a data pipeline to assess loan eligibility for applicants ba
 - **Data Transformation**: Using dbt to transform and model data.
 - **Data Testing**: Implementing tests to ensure data quality.
 - **Data Analysis**: Generating insights on loan eligibility.
+- **Advanced Features**: Integrating Machine Learning and Model Versioning.
 
 ---
 
@@ -72,7 +80,8 @@ This project builds a data pipeline to assess loan eligibility for applicants ba
 - **dbt-core** (compatible with your Python version)
 - **psycopg2** (for PostgreSQL connection)
 - **Faker** library (for data generation)
-- **Git** (optional, for version control)
+- **Git** (for version control)
+- **Optional**: Machine Learning libraries like scikit-learn, XGBoost
 
 ---
 
@@ -785,9 +794,206 @@ Use the `--target` flag to specify the environment when running dbt commands.
 
 ---
 
+## **Integrating Machine Learning into the Pipeline**
+
+To further enhance the loan eligibility assessment, you can integrate **Machine Learning (ML)** into your data pipeline. By leveraging ML algorithms, you can build predictive models that analyze historical data to predict the likelihood of loan repayment, default risks, and more nuanced eligibility criteria.
+
+### **Steps to Integrate ML:**
+
+1. **Data Preparation:**
+
+   - **Feature Engineering:** Create new features from existing data to improve model performance.
+   - **Data Cleaning:** Handle missing values and outliers.
+   - **Data Transformation:** Encode categorical variables and scale numerical features.
+
+2. **Model Development:**
+
+   - **Select Algorithms:** Choose appropriate ML algorithms (e.g., Logistic Regression, Random Forest).
+   - **Training:** Split the data into training and testing sets and train the model.
+   - **Hyperparameter Tuning:** Optimize model parameters for better performance.
+
+3. **Model Evaluation:**
+
+   - **Metrics:** Use accuracy, precision, recall, F1-score, ROC-AUC for evaluation.
+   - **Cross-Validation:** Ensure model robustness.
+
+4. **Integrate into Pipeline:**
+
+   - **Batch Prediction:** Use the trained model to predict loan eligibility in batches.
+   - **Real-Time Prediction:** Deploy the model as a service for real-time predictions.
+
+5. **Deployment:**
+
+   - **Model Serving:** Deploy using frameworks like Flask or FastAPI.
+   - **Integration with dbt:** Use dbt models to incorporate ML predictions.
+
+6. **Monitoring and Maintenance:**
+
+   - **Performance Monitoring:** Track model performance over time.
+   - **Retraining Strategies:** Update the model with new data periodically.
+
+### **Tools and Libraries:**
+
+- **Data Manipulation:** pandas, NumPy
+- **Machine Learning:** scikit-learn, XGBoost, LightGBM
+- **Model Deployment:** Flask, FastAPI
+- **MLOps Platforms:** MLflow, TensorFlow Serving
+
+---
+
+## **Model Versioning and Rollback Functionality in dbt**
+
+As your data models evolve, it's essential to manage changes carefully to avoid disrupting downstream processes and to maintain data integrity. dbt provides functionality for **model versioning** and supports rollback through version control systems like Git.
+
+### **Understanding Model Versioning**
+
+Model versioning in dbt allows you to:
+
+- **Track Changes Over Time:** Maintain different versions of a model as it evolves.
+- **Manage Breaking Changes:** Introduce changes without immediately impacting downstream consumers.
+- **Provide Migration Paths:** Allow consumers to transition to new model versions gracefully.
+
+### **When to Use Model Versioning**
+
+Use model versioning when:
+
+- **Making Breaking Changes:** Removing or renaming columns, changing data types.
+- **Maintaining Mature Models:** For models widely used across teams or systems.
+- **Providing Stability:** Ensuring that consumers are not forced to update immediately upon changes.
+
+### **Implementing Model Versioning**
+
+#### **1. Define Model Versions**
+
+Create multiple versions of a model by defining them with version numbers.
+
+**Example:**
+
+- `models/dim_customers.sql` (Version 1)
+- `models/dim_customers_v2.sql` (Version 2)
+
+#### **2. Update `schema.yml`**
+
+Define the versions and specify the latest version.
+
+```yaml
+models:
+  - name: dim_customers
+    latest_version: 1
+    config:
+      materialized: table
+      contract:
+        enforced: true
+    columns:
+      - name: customer_id
+        description: "Primary key"
+        data_type: int
+      - name: country_name
+        description: "Customer's country"
+        data_type: varchar
+
+    versions:
+      - v: 1
+      - v: 2
+        columns:
+          - include: all
+            exclude: [country_name]  # Column removed in version 2
+```
+
+#### **3. Configure Model Files**
+
+Ensure each versioned model file corresponds to its version.
+
+- `dim_customers.sql` or `dim_customers_v1.sql` (Version 1)
+- `dim_customers_v2.sql` (Version 2)
+
+#### **4. Reference Models with Versions**
+
+Use the `ref` function with the version argument.
+
+```sql
+select * from {{ ref('dim_customers', v=2) }}  -- References version 2
+```
+
+By default, `ref('dim_customers')` will point to the latest version.
+
+### **Configuring Versioned Models**
+
+You can configure each version independently in the `schema.yml` file.
+
+**Example:**
+
+```yaml
+versions:
+  - v: 1
+    config:
+      materialized: view
+  - v: 2
+    config:
+      materialized: table
+```
+
+### **Rollback Functionality**
+
+dbt leverages Git for version control, allowing you to roll back to previous states of your project.
+
+#### **Rolling Back Changes:**
+
+- **Using Git:**
+
+  ```bash
+  git checkout <commit_hash>  # Revert to a specific commit
+  ```
+
+- **Reverting Migrations:**
+
+  - Rebuild models from a previous state.
+  - Use `dbt run` to apply the rollback.
+
+#### **Data Platform Capabilities:**
+
+- Some databases support features like "time travel" to query historical data without rollback.
+
+### **Best Practices for Model Versioning**
+
+- **Communicate Changes:** Inform downstream users about new versions and deprecations.
+- **Deprecation Window:** Allow time for consumers to migrate to the new version.
+- **Consistent Naming:** Use a clear naming convention for versioned models.
+- **Documentation:** Update documentation to reflect changes across versions.
+
+### **Example Workflow:**
+
+1. **Create New Version:**
+
+   - Develop changes in `dim_customers_v2.sql`.
+   - Update `schema.yml` to include version 2.
+
+2. **Test New Version:**
+
+   - Use `dbt run --select dim_customers_v2` to build the new version.
+   - Validate data and performance.
+
+3. **Promote to Latest Version:**
+
+   - Update `latest_version` in `schema.yml` to `2`.
+   - Communicate the change to downstream users.
+
+4. **Deprecate Old Version:**
+
+   - Set a `deprecation_date` for version 1.
+   - Remove version 1 after the deprecation date.
+
+### **Optimizing Model Versions**
+
+- **Avoid Duplication:** Use common SQL snippets or macros to reduce code repetition.
+- **Selective Materialization:** Materialize only necessary versions to conserve resources.
+- **Automation:** Use scripts or CI/CD pipelines to manage version transitions.
+
+---
+
 ## **Conclusion**
 
-This project demonstrates how to build a robust data pipeline using **dbt** and **PostgreSQL** to assess loan eligibility based on various financial and credit metrics. By following the steps outlined, you can set up the environment, generate and load data, create models, run tests, and generate documentation and data quality reports.
+This project demonstrates how to build a robust data pipeline using **dbt** and **PostgreSQL** to assess loan eligibility based on various financial and credit metrics. By following the steps outlined, you can set up the environment, generate and load data, create models, run tests, generate documentation, integrate machine learning, and manage model versions effectively.
 
 ---
 
@@ -815,12 +1021,19 @@ This project demonstrates how to build a robust data pipeline using **dbt** and 
   - Verify the installation of the Elementary Data library.
   - Check the configuration in `dbt_project.yml` and `profiles.yml`.
 
+- **Model Versioning Challenges:**
+  - Ensure version numbers are correctly specified.
+  - Communicate changes to downstream users.
+  - Maintain clear documentation of changes across versions.
+
 ### **References**
 
 - [dbt Documentation](https://docs.getdbt.com/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html)
 - [Elementary Data Documentation](https://docs.elementary-data.com/)
+- [dbt Model Versioning](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/model-versions)
+- [Machine Learning with Python](https://scikit-learn.org/stable/)
 
 ---
 
